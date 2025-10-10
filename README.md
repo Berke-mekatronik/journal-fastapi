@@ -18,29 +18,29 @@ Create a complete Journal API solution that allows users to:
 ### API Implementation
 
 1. Implement missing endpoints in `journal_router.py`:
-   - GET /entries - List all journal entries
-   - GET /entries/{entry_id} - Get single entry
-   - DELETE /entries/{entry_id} - Delete specific entry
+   - GET /entries - List all journal entries (Done✅)
+   - GET /entries/{entry_id} - Get single entry (Done✅)
+   - DELETE /entries/{entry_id} - Delete specific entry (Done✅)
 
 ### Logging Setup
 
 1. Set up basic console logging in `main.py`:
-   - Configure basic logging
-   - Set logging level to INFO
-   - Add console handler
+   - Configure basic logging (Done✅)
+   - Set logging level to INFO (Done✅)
+   - Add console handler (Done✅)
 
 ### Data Model Improvements
 
 1. Enhance the Entry model in `models/entry.py`:
-   - Add basic field validation rules
-   - Add input data sanitization
-   - Add schema version tracking
+   - Add basic field validation rules (Done✅)
+   - Add input data sanitization (Done✅)
+   - Add schema version tracking (Done✅)
 
 ### Development Environment
 
 1. Configure cloud provider CLI in `.devcontainer/devcontainer.json`:
-   - Choose and add one cloud CLI tool (Azure, AWS, or GCloud)
-   - Test CLI tool installation and authentication
+   - Choose and add one cloud CLI tool (Azure, AWS, or GCloud) (Done✅)
+   - Test CLI tool installation and authentication (Done✅)
 
 ## Technical Implementation
 
@@ -61,9 +61,9 @@ All text fields require sanitization to prevent injection attacks and ensure dat
 
 ### API Endpoints
 
-1. **GetEntries:** Returns a JSON list of all journal entries - NEEDS IMPLEMENTATION
-2. **GetEntry:** Returns a specific journal entry by ID - NEEDS IMPLEMENTATION
-3. **DeleteEntry:** Removes a specific journal entry - NEEDS IMPLEMENTATION
+1. **GetEntries:** Returns a JSON list of all journal entries - NEEDS IMPLEMENTATION (Done✅)
+2. **GetEntry:** Returns a specific journal entry by ID - NEEDS IMPLEMENTATION (Done✅)
+3. **DeleteEntry:** Removes a specific journal entry - NEEDS IMPLEMENTATION (Done✅)
 4. **CreateEntry:** Creates a new journal entry - IMPLEMENTED
 5. **UpdateEntry:** Updates an existing journal entry - IMPLEMENTED
 6. **DeleteAllEntries:** Removes all journal entries - IMPLEMENTED
