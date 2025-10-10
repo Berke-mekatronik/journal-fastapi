@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from typing import Optional
 from datetime import datetime
 from uuid import uuid4
@@ -36,6 +36,19 @@ class Entry(BaseModel):
         default_factory=datetime.utcnow,
         description="Timestamp when the entry was last updated."
     )
+
+    schema_version: str = Field(
+        default="1.0",
+        description="Version of the schema used to store this entry."
+    )
+
+    @validator("work", "struggle", "intention")
+    def no_prohibited_words(cls, value):
+        prohibited = ["badword", "hack", "xxx"]
+        if any(p in value.lower() for p in prohibited):
+            raise ValueError("Inappropriate language is not allowed.")
+        return value.strip()
+
     # Optional: add a partition key if your Cosmos DB collection requires it
     # partition_key: str = Field(..., description="Partition key for the entry.")
 

@@ -7,7 +7,7 @@
 	"runArgs": ["--add-host=host.docker.internal:host-gateway"],
 	"features": {
 		// TODO: Add one of these cloud CLI tools based on your needs:
-        // "ghcr.io/devcontainers/features/azure-cli:1": {},
+        "ghcr.io/devcontainers/features/azure-cli:1": {}
         // "ghcr.io/devcontainers/features/aws-cli:1": {},
         // "ghcr.io/devcontainers/features/gcloud:1": {}
 	}
