@@ -3,10 +3,26 @@ from typing import Optional
 from datetime import datetime
 from uuid import uuid4
 
+class EntryCreate(BaseModel):
+    """Model for creating a new journal entry (user input)."""
+    work: str = Field(
+        max_length=256,
+        description="What did you work on today?",
+        json_schema_extra={"example": "FastAPI test "}
+    )
+    struggle: str = Field(
+        max_length=256,
+        description="What's one thing you struggled with today?",
+        json_schema_extra={"example": "Hard"}
+    )
+    intention: str = Field(
+        max_length=256,
+        description="What will you study/work on tomorrow?",
+        json_schema_extra={"example": "Testing"}
+    )
+
 class Entry(BaseModel):
     # TODO: Add field validation rules
-    # TODO: Add custom validators
-    # TODO: Add schema versioning
     # TODO: Add data sanitization methods
     
     id: str = Field(
@@ -37,23 +53,16 @@ class Entry(BaseModel):
         description="Timestamp when the entry was last updated."
     )
 
+    # TODO: Add schema versioning
     schema_version: str = Field(
         default="1.0",
         description="Version of the schema used to store this entry."
     )
 
+    # TODO: Add custom validators
     @validator("work", "struggle", "intention")
     def no_prohibited_words(cls, value):
         prohibited = ["badword", "hack", "xxx"]
         if any(p in value.lower() for p in prohibited):
             raise ValueError("Inappropriate language is not allowed.")
         return value.strip()
-
-    # Optional: add a partition key if your Cosmos DB collection requires it
-    # partition_key: str = Field(..., description="Partition key for the entry.")
-
-    class Config:
-        # This can help with how the model serializes field names if needed by Cosmos DB.
-        # For example, if Cosmos DB requires a specific field naming convention.
-        # allow_population_by_field_name = True
-        pass

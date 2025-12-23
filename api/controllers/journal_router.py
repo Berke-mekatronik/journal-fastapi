@@ -1,10 +1,12 @@
 import logging
-from typing import AsyncGenerator, Optional
+from typing import AsyncGenerator, Optional, List
 from fastapi import APIRouter, HTTPException, Request, Depends 
 from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from api.repositories.postgres_repository import PostgresDB
-from api.services import EntryService
+from ..repositories.postgres_repository import PostgresDB
+from ..services import EntryService
+from ..models.entry import Entry, EntryCreate
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 from jose import jwt, JWTError
@@ -12,14 +14,15 @@ from datetime import datetime, timedelta
 import os
 
 
-
-
-
 # TODO: Add authentication middleware
 load_dotenv()  # .env dosyasını oku
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
+
+def create_access_token(data: dict) -> str:
+    return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
+
 
 class JWTBearer(HTTPBearer):
     async def __call__(self, request: Request):
@@ -30,7 +33,6 @@ class JWTBearer(HTTPBearer):
         except JWTError:
             raise HTTPException(status_code=403, detail="Invalid or expired token")
         return credentials.credentials
-
 
 # TODO: Add request validation middleware
 class EntryModel(BaseModel):
@@ -49,8 +51,10 @@ def rate_limiter(request: Request):
         if (now - last_seen).seconds < 2:  # 1 istek/2 saniye
             raise HTTPException(status_code=429, detail="Too many requests")
     rate_limit_cache[ip] = now
+
 # TODO: Add API versioning
 router = APIRouter(prefix="/v1")
+
 # TODO: Add response caching
 response_cache = {}
 
@@ -59,31 +63,40 @@ async def get_entry_service() -> AsyncGenerator[EntryService, None]:
     async with PostgresDB() as db:
         yield EntryService(db)
 
-@router.post("/entries/")
-async def create_entry(request: Request, entry: dict, entry_service: EntryService = Depends(get_entry_service)):
+@router.post("/login")
+def login():
+    # Normalde burada username/password kontrol edilir
+    user_data = {"sub": "test_user"}
 
-    entry_data = {
-        k: v for k, v in entry.items()
-        if k not in ['id', 'created_at', 'updated_at']
+    access_token = create_access_token(user_data)
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer"
     }
-    async with PostgresDB() as db:
-        entry_service = EntryService(db)
-        try:
-            enriched_entry = await entry_service.create_entry(entry_data)
-            await entry_service.db.create_entry(enriched_entry)
-  
-        except HTTPException as e:
-          
-            if e.status_code == 409:
-                raise HTTPException(
-                    status_code=409, detail="You already have an entry for today."
-                )
-            raise e
+
+@router.post("/entries/", dependencies=[Depends(JWTBearer())])
+async def create_entry(entry: EntryCreate, entry_service: EntryService = Depends(get_entry_service)):
+
+    entry_data = entry.model_dump()
+
+    try:
+        enriched_entry = await entry_service.create_entry(entry_data)
+        await entry_service.db.create_entry(enriched_entry)
+
+    except HTTPException as e:
+        if e.status_code == 409:
+            raise HTTPException(
+                status_code=409,
+                detail="You already have an entry for today."
+            )
+        raise e
+
     return JSONResponse(content={"detail": "Entry created successfully"}, status_code=201)
 
 # TODO: Implement GET /entries endpoint to list all journal entries
 # Example response: [{"id": "123", "work": "...", "struggle": "...", "intention": "..."}]
-@router.get("/entries", dependencies=[Depends(JWTBearer())])
+@router.get("/entries",response_model=List[Entry], dependencies=[Depends(JWTBearer())])
 async def get_all_entries(request: Request, entry_service: EntryService = Depends(get_entry_service)):
     # TODO: Implement get all entries endpoint
     # Hint: Use PostgresDB and EntryService like other endpoints
@@ -93,9 +106,12 @@ async def get_all_entries(request: Request, entry_service: EntryService = Depend
     if cache_key in response_cache:
         return response_cache[cache_key]
 
-    result = await entry_service.get_all_entries()
-    response_cache[cache_key] = result
-    return result
+    entries = await entry_service.get_all_entries()
+
+    encoded_entries = jsonable_encoder(entries)
+    response_cache[cache_key] = encoded_entries
+
+    return encoded_entries
 
 @router.get("/entries/{entry_id}", dependencies=[Depends(JWTBearer())])
 async def get_entry(request: Request, entry_id: str, entry_service: EntryService = Depends(get_entry_service)):
@@ -108,7 +124,7 @@ async def get_entry(request: Request, entry_id: str, entry_service: EntryService
         raise HTTPException(status_code=404, detail="Entry not found")
     return result
 
-@router.patch("/entries/{entry_id}")
+@router.patch("/entries/{entry_id}", dependencies=[Depends(JWTBearer())])
 async def update_entry(request: Request, entry_id: str, entry_update: dict):
     async with PostgresDB() as db:
         entry_service = EntryService(db)
@@ -132,7 +148,7 @@ async def delete_entry(request: Request, entry_id: str, entry_service: EntryServ
         raise HTTPException(status_code=404, detail="Entry not found")
     return {"detail": "Entry deleted"}
 
-@router.delete("/entries")
+@router.delete("/entries", dependencies=[Depends(JWTBearer())])
 async def delete_all_entries(request: Request):
    
     async with PostgresDB() as db:
