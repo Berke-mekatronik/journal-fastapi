@@ -13,7 +13,6 @@ from jose import jwt, JWTError
 from datetime import datetime, timedelta
 import os
 
-
 # TODO: Add authentication middleware
 load_dotenv()  # .env dosyasını oku
 
@@ -22,7 +21,6 @@ ALGORITHM = os.getenv("ALGORITHM")
 
 def create_access_token(data: dict) -> str:
     return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
-
 
 class JWTBearer(HTTPBearer):
     async def __call__(self, request: Request):

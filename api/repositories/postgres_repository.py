@@ -25,9 +25,6 @@ class PostgresDB(DatabaseInterface):
         if self.pool:
             await self.pool.close()
 
-    # ------------------------
-    # CREATE
-    # ------------------------
     async def create_entry(self, entry_data: Dict[str, Any]) -> None:
         async with self.pool.acquire() as conn:
             query = """
@@ -49,9 +46,6 @@ class PostgresDB(DatabaseInterface):
                 updated_at,
             )
 
-    # ------------------------
-    # READ (ALL)
-    # ------------------------
     async def get_entries(self) -> List[Dict[str, Any]]:
         async with self.pool.acquire() as conn:
             query = "SELECT * FROM entries ORDER BY created_at DESC"
@@ -69,9 +63,6 @@ class PostgresDB(DatabaseInterface):
                 for row in rows
             ]
 
-    # ------------------------
-    # READ (SINGLE)
-    # ------------------------
     async def get_entry(self, entry_id: str) -> Optional[Dict[str, Any]]:
         async with self.pool.acquire() as conn:
             query = "SELECT * FROM entries WHERE id = $1"
@@ -88,10 +79,7 @@ class PostgresDB(DatabaseInterface):
                 "created_at": row["created_at"],
                 "updated_at": row["updated_at"],
             }
-
-    # ------------------------
-    # UPDATE
-    # ------------------------
+        
     async def update_entry(self, entry_id: str, updated_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         updated_at = datetime.now(timezone.utc)
 
@@ -128,9 +116,6 @@ class PostgresDB(DatabaseInterface):
                 "updated_at": row["updated_at"],
             }
 
-    # ------------------------
-    # DELETE (SINGLE)
-    # ------------------------
     async def delete_entry(self, entry_id: str) -> int:
         async with self.pool.acquire() as conn:
             query = "DELETE FROM entries WHERE id = $1"
@@ -138,9 +123,6 @@ class PostgresDB(DatabaseInterface):
             # result: "DELETE 0" or "DELETE 1"
             return int(result.split(" ")[1])
 
-    # ------------------------
-    # DELETE (ALL)
-    # ------------------------
     async def delete_all_entries(self) -> int:
         async with self.pool.acquire() as conn:
             query = "DELETE FROM entries"

@@ -78,3 +78,4 @@ class EntryService:
         deleted_rows = await self.db.delete_all_entries()
         logger.debug("Deleted %s entries", deleted_rows)
         return deleted_rows
+    
